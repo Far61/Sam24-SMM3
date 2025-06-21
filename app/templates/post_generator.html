@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block title %}Генератор постов{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <!-- форма -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Генератор постов</h5>
+          {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+          {% endif %}
+
+          <form id="generationForm" method="post">
+            <!-- тема -->
+            <div class="mb-3">
+              <label for="topic" class="form-label">Тема поста:</label>
+              <input type="text" name="topic" id="topic" class="form-control" required>
+            </div>
+
+            <!-- тон -->
+            <div class="mb-3">
+              <label for="tone" class="form-label">Тон поста:</label>
+              <select name="tone" id="tone" class="form-select">
+                <option value="дружелюбный эксперт">Дружелюбный эксперт</option>
+                <option value="строгий профессионал">Строгий профессионал</option>
+                <option value="креативный">Креативный</option>
+              </select>
+            </div>
+
+                        <div class="mb-3">
+                            <label for="text_prompt" class="form-label">Системный prompt для текста:</label>
+                            <textarea name="text_prompt" id="text_prompt" class="form-control" rows="3">{{ request.form.text_prompt or "Ты — копирайтер Digital-студии SAM-24. Цель: по заданной теме создать пост для VK и Telegram. Требования к посту: 1. Язык — русский, деловой-дружелюбный, без канцелярита. 2. Тон — эксперт + забота делимся опытом, помогаем аудитории. 3. Объём — 900–1200 символов. 4. Структура — Hook (≤120 зн.); 2–4 абзаца раскрытия темы (факты, выгоды, примеры); CTA одной строкой. 5. Без ссылок, телефонов и прямой рекламы. Вывод: готовый текст поста без дополнительных комментариев." }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="image_prompt" class="form-label">Системный prompt для иллюстрации:</label>
+                            <textarea name="image_prompt" id="image_prompt" class="form-control" rows="3">{{ request.form.image_prompt or "Ты — арт-директор Digital-студии SAM-24. Получив текст поста, составь одну строку text-to-image prompt для OpenAI GPT-4o Images, чтобы с первого раза получить вирусную иллюстрацию для соцсетей.\n\n• Стиль — современная плоская векторная графика / чистая инфографика, никаких фотореалистичных элементов.\n• Палитра — по умолчанию фирменные SAM-24: индиго-синий #1C64F2, янтарный #FFB800, тёмный #2D334A, белый #FFFFFF (можно добавить ≤2 гармоничных оттенка).\n• Композиция — ОДИН легкоузнаваемый символ/пиктограмма, однозначно связанный с темой поста; не выводи объект за кадр и оставь вокруг него ≥15 % свободного пространства; допускается ≤3 второстепенные иконки фоном.\n• Маскот: по умолчанию SAMmy — дружелюбный кубический робот (#1C64F2 с янтарными акцентами); если тема серьёзная (законы, безопасность, комплаенс) замени маскота на стилизованный объект-персону (документ-щит, замок-экран) или укажи «без персонажа».\n• Запрещено добавлять какой-либо текст или буквы на изображении.\n• Явно укажи: без кислотных цветов, визуального шума, водяных знаков, искажённого текста, обрезанных элементов.\n• Цель — идея поста понятна за менее чем 3 секунды и вызывает желание поделиться.\n\nФормат: верни одну строку без переносов, начиная сразу с описания сцены, и включи ключевой символ, (при необходимости) SAMmy или объект-персону, палитру, безопасные отступы и запреты («без …»)." }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="image_model" class="form-label">Модель генерации изображения:</label>
+                            <select name="image_model" id="image_model" class="form-select">
+                              <option value="gpt-image-1">GPT-Image-1</option>  
+                              <option value="dall-e-3">DALL·E 3</option>                                
+                                <option value="dall-e-2">DALL·E 2</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="image_size" class="form-label">Размер изображения:</label>
+                            <select name="image_size" id="image_size" class="form-select">
+                                <option value="1024x1024">1024×1024</option>
+                                <option value="1024x1792">1024×1792 (портрет)</option>
+                                <option value="1792x1024">1792×1024 (ландшафт)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="image_quality" class="form-label">Качество изображения:</label>
+                            <select name="image_quality" id="image_quality" class="form-select">
+                                <option value="standard">Standard</option>
+                                <option value="hd">HD</option>
+                            </select>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="generate_image" id="generate_image" class="form-check-input" checked>
+                            <label for="generate_image" class="form-check-label">Сгенерировать изображение</label>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" name="auto_post" id="auto_post" class="form-check-input">
+                            <label for="auto_post" class="form-check-label">Автоматически опубликовать в ВК</label>
+                        </div>
+
+                       <div class="d-grid">
+              <button type="submit" class="btn btn-primary" id="generateBtn">Сгенерировать</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- прогресс -->
+      <div id="progressCard" class="card shadow-sm mb-4" style="display:none;">
+        <div class="card-body">
+          <h5 class="card-title">Генерация…</h5>
+          <div class="progress mb-3">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:100%"></div>
+          </div>
+          <p class="text-muted text-center">Пожалуйста, подождите. Это может занять несколько минут.</p>
+        </div>
+      </div>
+
+      <!-- результат -->
+      <div id="resultCard" class="card shadow-sm mb-4" style="display:none;">
+        <div class="card-body">
+          <h5 class="card-title">Сгенерированный пост</h5>
+          <div id="postContent" class="card-text mb-3"></div>
+
+          <div id="imageContainer" class="text-center mb-3" style="display:none;">
+            <h6>Сгенерированное изображение</h6>
+            <img id="generatedImage" class="img-fluid rounded border" style="max-width:100%;height:auto;">
+          </div>
+
+          <div class="d-grid gap-2">
+            <button class="btn btn-success" id="publishBtn" style="display:none;">Опубликовать в ВК</button>
+            <button class="btn btn-secondary" id="newPostBtn"  style="display:none;">Создать новый пост</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ошибка -->
+      <div id="errorCard" class="card shadow-sm mb-4" style="display:none;">
+        <div class="card-body">
+          <h5 class="card-title text-danger">Ошибка</h5>
+          <p id="errorMessage" class="card-text"></p>
+          <div class="d-grid">
+            <button class="btn btn-primary" onclick="location.reload()">Попробовать снова</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if post_text %}
+  <div class="alert alert-success mt-3">
+    <b>Сгенерированный пост:</b><br>
+    <div style="white-space: pre-line; background: #fff; color: #222; border-radius: 6px; padding: 12px; margin-top: 8px;">
+      {{ post_text }}
+    </div>
+    <div class="text-center mt-3">
+      <form method="post" action="{{ url_for('postgen.publish_vk') }}">
+        <input type="hidden" name="post_text" value="{{ post_text }}">
+        <input type="hidden" name="image_url" value="{{ image_url }}">
+        <button type="submit" class="btn btn-success">Опубликовать в ВК</button>
+      </form>
+    </div>
+  </div>
+{% endif %}
+{% if image_url %}
+  <div class="text-center mb-3">
+    <img src="{{ image_url }}"
+         class="img-fluid rounded border shadow"
+         style="width:510px; max-width:100%; height:auto; background:#fff; display:inline-block;">
+  </div>
+{% endif %}
+{% if error %}
+  <div class="alert alert-danger mt-3">{{ error }}</div>
+{% endif %}
+{% if published %}
+  <div class="alert alert-success mt-3">
+    ✅ Пост успешно опубликован в VK!
+  </div>
+{% endif %}
+{% if vk_response %}
+  <pre class="bg-light p-2 rounded border">{{ vk_response|tojson(indent=2) }}</pre>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+console.log("JS loaded!");
+
+const genUrl = "{{ url_for('postgen.post_generator_page') }}";
+const statUrl = "{{ url_for('postgen.check_status', task_id='') }}";
+
+let currentTaskId = null;
+let pollTimer = null;
+
+document.getElementById('generationForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    
+    // Блокируем кнопку
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    
+    hide('#resultCard', '#errorCard');
+    show('#progressCard');
+
+    try {
+        const fd = new FormData(e.target);
+        const r = await fetch(window.location.href, {
+            method: 'POST',
+            body: fd
+        });
+        
+        if (!r.ok) {
+            throw new Error(`HTTP error! status: ${r.status}`);
+        }
+        
+        const d = await r.json();
+        console.log('Response:', d);
+
+        if (d.status === 'completed') {
+            showResult(d.content);
+        } else if (d.status === 'error') {
+            showError(d.error || 'Неизвестная ошибка');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showError('Ошибка при отправке запроса: ' + error.message);
+    } finally {
+        submitBtn.disabled = false;
+        hide('#progressCard');
+    }
+});
+
+function showResult(content) {
+    hide('#progressCard');
+    show('#resultCard');
+    
+    if (content.post_text) {
+        document.getElementById('postContent').innerHTML = `<div style="white-space: pre-line; background: #fff; color: #222; border-radius: 6px; padding: 12px; margin-top: 8px;">${content.post_text}</div>`;
+    }
+    
+    if (content.image_url) {
+        show('#imageContainer');
+        document.getElementById('generatedImage').src = content.image_url;
+    }
+    
+    show('#publishBtn', '#newPostBtn');
+}
+
+// кнопка «Опубликовать» (эскиз, логика публикации отдельная)
+document.getElementById('publishBtn').addEventListener('click', async (e) => {
+    e.target.disabled = true;
+    // Получаем текст и картинку из результата
+    const postText = document.getElementById('postContent').innerText;
+    const imageUrl = document.getElementById('generatedImage')?.src || "";
+
+    // Показываем прогресс
+    hide('#resultCard', '#errorCard');
+    show('#progressCard');
+
+    try {
+        const fd = new FormData();
+        fd.append("post_text", postText);
+        fd.append("image_url", imageUrl.replace(location.origin, "")); // только путь
+
+        const r = await fetch("/publish_vk", {
+            method: "POST",
+            body: fd
+        });
+
+        const d = await r.json();
+        if (d.status === "success") {
+            alert("✅ Пост опубликован в VK!");
+        } else {
+            showError(d.error || "Ошибка публикации");
+        }
+    } catch (error) {
+        showError("Ошибка публикации: " + error.message);
+    } finally {
+        e.target.disabled = false; // если хотите снова разрешить публикацию после ошибки
+        hide('#progressCard');
+        show('#resultCard');
+    }
+});
+
+// helpers
+function show(...ids){ ids.forEach(i=>document.querySelector(i).style.display='block'); }
+function hide(...ids){ ids.forEach(i=>document.querySelector(i).style.display='none'); }
+
+// «Новый пост»
+document.getElementById('newPostBtn').addEventListener('click', () => {
+  document.getElementById('generationForm').reset();
+  hide('#resultCard', '#errorCard');
+  window.scrollTo(0,0);
+});
+</script>
+{% endblock %}

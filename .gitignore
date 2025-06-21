@@ -1,0 +1,30 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+
+# Logs
+*.log
+generation.log
+gunicorn_error.log
+
+# Output and generated files
+output/
+instance/
+model_cache.json
+*.db
+*.sqlite3
+
+# Static generated images (если не хотите хранить их в git)
+app/static/generated/
+
+# Archives
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body text-center">
+                <h2 class="mb-3">Добро пожаловать, {{ current_user.email }}!</h2>
+                <p class="lead mb-4">Ваш персональный SMM-ассистент для ВКонтакте</p>
+                <div class="d-flex justify-content-center gap-3 mb-4">
+                    <a href="{{ url_for('postgen.post_generator_page') }}" class="btn btn-primary btn-lg">Генератор постов</a>
+                    <a href="{{ url_for('vk_stats.stats') }}" class="btn btn-success btn-lg">Статистика VK</a>
+                    <a href="{{ url_for('settings.settings_page') }}" class="btn btn-outline-secondary btn-lg">Настройки</a>
+                </div>
+            </div>
+        </div>
+
+        {% if stats %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Краткая статистика VK</h5>
+                <div class="row text-center">
+                    {% for key, value in stats.items() %}
+                    <div class="col-6 col-md-3 mb-2">
+                        <div class="border rounded py-2 bg-light">
+                            <div class="fw-bold">{{ value }}</div>
+                            <div class="small text-muted">{{ key }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if last_post %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Последний сгенерированный пост</h5>
+                <p class="card-text">{{ last_post }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

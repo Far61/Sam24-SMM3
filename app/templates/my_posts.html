@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Мои посты{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-4">Мои сгенерированные посты</h3>
+  {% if posts %}
+    <div class="table-responsive">
+      <table class="table align-middle table-bordered table-hover bg-white">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 20%;">Тема поста</th>
+            <th style="width: 38%;">Пост</th>
+            <th style="width: 22%;">Изображение</th>
+            <th style="width: 14%;">Статус</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for post in posts %}
+          <tr>
+            <!-- Тема поста -->
+            <td style="vertical-align: middle;">
+              {% set short_topic = post.topic[:post.topic[:120].rfind(' ')] if post.topic|length > 120 else post.topic %}
+              {% set rest_topic = post.topic[post.topic[:120].rfind(' '):] if post.topic|length > 120 else '' %}
+              <div style="white-space: pre-line; color: #222; border-radius: 6px; padding: 8px; margin-bottom: 0;">
+                {{ short_topic }}{% if post.topic|length > 120 %}...{% endif %}
+                {% if post.topic|length > 120 %}
+                  <div class="collapse mt-2" id="topic-full-{{ post.id }}">
+                    {{ rest_topic }}
+                  </div>
+                  <div>
+                    <button class="btn btn-link btn-sm p-0 mt-1" type="button"
+                            data-mdb-toggle="collapse"
+                            data-mdb-target="#topic-full-{{ post.id }}"
+                            aria-expanded="false"
+                            aria-controls="topic-full-{{ post.id }}">
+                      Подробнее
+                    </button>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="mt-2">
+                <small class="text-muted">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+              </div>
+            </td>
+            <!-- Текст поста -->
+            <td style="vertical-align: middle;">
+              {% set short_content = post.content[:post.content[:180].rfind(' ')] if post.content|length > 180 else post.content %}
+              {% set rest_content = post.content[post.content[:180].rfind(' '):] if post.content|length > 180 else '' %}
+              <div style="white-space: pre-line; color: #222; border-radius: 6px; padding: 8px; margin-bottom: 0;">
+                {{ short_content }}{% if post.content|length > 180 %}...{% endif %}
+                {% if post.content|length > 180 %}
+                  <div class="collapse mt-2" id="content-full-{{ post.id }}">
+                    {{ rest_content }}
+                  </div>
+                  <div>
+                    <button class="btn btn-link btn-sm p-0 mt-1" type="button"
+                            data-mdb-toggle="collapse"
+                            data-mdb-target="#content-full-{{ post.id }}"
+                            aria-expanded="false"
+                            aria-controls="content-full-{{ post.id }}">
+                      Подробнее
+                    </button>
+                  </div>
+                {% endif %}
+              </div>
+            </td>
+            <!-- Изображение -->
+            <td class="text-center" style="vertical-align: middle;">
+              {% if post.image_path %}
+                <img src="{{ post.image_path }}" class="img-fluid rounded border shadow" style="max-width: 100%; max-height: 120px; object-fit: contain;">
+              {% else %}
+                <span class="text-muted">Нет изображения</span>
+              {% endif %}
+            </td>
+            <!-- Статус -->
+            <td class="text-center" style="vertical-align: middle;">
+              {% if post.published %}
+                <span class="badge bg-success">Опубликовано</span>
+              {% else %}
+                <span class="badge bg-secondary mb-2 d-block">Не опубликовано</span>
+                <form method="post" action="{{ url_for('postgen.publish_vk') }}">
+                  <input type="hidden" name="post_id" value="{{ post.id }}">
+                  <input type="hidden" name="post_text" value="{{ post.content }}">
+                  <input type="hidden" name="image_url" value="{{ post.image_path }}">
+                  <button type="submit" class="btn btn-success btn-sm">Опубликовать в ВК</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info">У вас пока нет сгенерированных постов.</div>
+  {% endif %}
+</div>
+{% endblock %}
